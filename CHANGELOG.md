@@ -5,6 +5,7 @@
 - Initial public release.
 - Added Rails helpers for responsive, Turbo Frame-aware index tables.
 - Added optional Ransack sort links and Pagy navigation integration.
+- Added support for both Pagy 43 object navigation and legacy view helpers.
 - Added token CSS, a Tailwind v4 token adapter, and Stimulus filter submission.
 - Added dark-mode defaults for Rails UI applications.
 - Added importmap and bundled-JavaScript integration paths.
