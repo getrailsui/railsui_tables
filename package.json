@@ -1,0 +1,32 @@
+{
+  "name": "@getrailsui/tables",
+  "version": "0.1.0",
+  "description": "Rails-native SaaS table components for Rails UI.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./app/javascript/railsui_tables/index.js",
+    "./styles.css": "./app/assets/stylesheets/railsui_tables.css",
+    "./tailwind.css": "./app/assets/stylesheets/railsui_tables.tailwind.css",
+    "./controllers/*": "./app/javascript/controllers/*"
+  },
+  "files": [
+    "app/javascript",
+    "app/assets/javascripts",
+    "app/assets/stylesheets",
+    "skills",
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "esbuild app/javascript/railsui_tables/index.js --bundle --format=esm --external:@hotwired/stimulus --outfile=app/assets/javascripts/railsui_tables.js",
+    "test": "node --test test/javascript/*.test.mjs"
+  },
+  "peerDependencies": {
+    "@hotwired/stimulus": ">=3.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

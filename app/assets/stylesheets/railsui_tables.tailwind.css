@@ -1,0 +1,17 @@
+@layer components {
+  .railsui-table-wrap {
+    --railsui-table-bg: var(--color-white);
+    --railsui-table-fg: var(--color-zinc-950);
+    --railsui-table-muted: var(--color-zinc-500);
+    --railsui-table-border: var(--color-zinc-200);
+    --railsui-table-hover: var(--color-zinc-50);
+  }
+
+  .dark .railsui-table-wrap {
+    --railsui-table-bg: var(--color-zinc-950);
+    --railsui-table-fg: var(--color-zinc-100);
+    --railsui-table-muted: var(--color-zinc-400);
+    --railsui-table-border: var(--color-zinc-800);
+    --railsui-table-hover: var(--color-zinc-900);
+  }
+}

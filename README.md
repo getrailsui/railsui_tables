@@ -1,0 +1,180 @@
+# Rails UI Tables
+
+Rails-native, accessible tables for SaaS index pages. `railsui_tables` keeps
+index-page work in the Rails stack: Active Record relations, GET parameters,
+Ransack when an app already uses it, Pagy when an app already uses it, and
+Turbo Frames for partial navigation. It is not a spreadsheet or a client-side
+data grid.
+
+The Ruby gem and `@getrailsui/tables` package are MIT licensed. Saved views and
+bulk-action controls live in the subscriber-only
+[`railsui_tables_pro`](https://github.com/getrailsui/railsui_tables_pro)
+companion.
+
+## Requirements
+
+- Ruby 3.1+
+- Rails 7.2 or 8.x
+- Stimulus 3+ for filter submission behavior
+
+Ransack and Pagy are optional. Tables render without either; they only add
+sorting/filtering and pagination integrations when present in the host app.
+
+## Installation
+
+```ruby
+# Gemfile
+gem "railsui_tables"
+```
+
+```bash
+bundle install
+bin/rails g railsui_tables:install
+```
+
+The installer links the stylesheet from the gem:
+
+```erb
+<%= stylesheet_link_tag "railsui_tables" %>
+```
+
+The engine places its CSS and compiled JavaScript on the Rails asset path, so
+Propshaft and Sprockets applications do not copy asset files into the host app.
+
+### JavaScript
+
+**Importmap applications** receive the `railsui_tables` pin from the engine.
+Register the controllers in the application controller index:
+
+```js
+import { registerRailsuiTables } from "railsui_tables"
+
+registerRailsuiTables(application)
+```
+
+**Bundled applications** install and register the package:
+
+```bash
+yarn add @getrailsui/tables
+```
+
+```js
+import { registerRailsuiTables } from "@getrailsui/tables"
+
+registerRailsuiTables(application)
+```
+
+### Styling
+
+The default stylesheet uses `--railsui-table-*` tokens and includes responsive
+row labels for small screens. Set those tokens in the host design system to
+match a non-Rails-UI application.
+
+Tailwind v4 applications can map the tokens to Tailwind color variables:
+
+```css
+/* app/assets/tailwind/application.css */
+@import "@getrailsui/tables/tailwind.css";
+```
+
+Use either the asset-pipeline stylesheet or your own bundled CSS import, not
+both.
+
+## Basic Table
+
+Prepare records in the controller, then use column definitions in the view:
+
+```erb
+<%= railsui_table id: :users,
+      records: @users,
+      row_id: ->(user) { dom_id(user) },
+      row_url: ->(user) { user_path(user) },
+      columns: [
+        { key: :name, sortable: true },
+        { key: :email, sortable: true },
+        { key: :created_at, label: "Joined" }
+      ] %>
+```
+
+Columns may be symbols, hashes, or `RailsuiTables::Column` objects. A hash can
+provide `label:`, `sortable:`, `cell_class:`, `header_class:`, or a `value:`
+lambda for display values that do not map directly to a model method:
+
+```erb
+<%= railsui_table id: :subscriptions, records: @subscriptions,
+      columns: [
+        :customer_name,
+        { key: :status, value: ->(subscription) { status_badge(subscription) } },
+        { key: :mrr, label: "MRR", value: ->(subscription) { number_to_currency(subscription.mrr) } }
+      ] %>
+```
+
+Pass a block for fully custom per-cell output. The block receives the record
+and normalized column object.
+
+## Filters, Sorting, and Pagination
+
+Keep table state in the URL. This makes a filtered view linkable, works before
+JavaScript loads, and lets Turbo replace only the table frame.
+
+```ruby
+# app/controllers/users_controller.rb
+def index
+  @q = User.order(created_at: :desc).ransack(params[:q])
+  @pagy, @users = pagy(@q.result)
+end
+```
+
+```erb
+<%= railsui_table_filter_form(url: users_path, frame: :users) do %>
+  <%= search_field_tag "q[name_or_email_cont]", params.dig(:q, :name_or_email_cont),
+        placeholder: "Search users",
+        data: { action: "input->railsui-table-filter#queueSubmit" } %>
+<% end %>
+
+<%= railsui_table id: :users, records: @users, query: @q, pagy: @pagy,
+      columns: [{ key: :name, sortable: true }, { key: :email, sortable: true }] %>
+```
+
+With `query: @q`, sortable columns use Ransack's `sort_link`. With `pagy:
+@pagy`, the helper uses `pagy_nav`; include Pagy's frontend helpers in the host
+application as normal. The filter controller debounces `requestSubmit` by
+250ms but the form remains a standard GET form.
+
+## Turbo Behavior
+
+`railsui_table` wraps its content in a Turbo Frame by default. Its `id:` is the
+frame identifier, so the filter form should use the same `frame:` value. Pass
+`frame: false` for a full-page table or when the surrounding template owns the
+frame.
+
+Turbo Streams should replace the frame or row the host application owns. The
+gem does not subscribe to model updates, reorder collections, or invent stream
+targets; those decisions belong to the product using the table.
+
+## What This Gem Does Not Do
+
+- No client-side sorting, pagination, or full collection synchronization
+- No inline spreadsheet editing, pivoting, grouping, or data virtualization
+- No authorization or bulk mutation behavior
+- No assumptions about a particular CSS framework, ORM query, or route shape
+
+For selection checkboxes, personal saved views, and bulk-action form controls,
+install `railsui_tables_pro`. The host application remains responsible for
+authorizing each selected record and mutation.
+
+## Development
+
+```bash
+bundle exec rake test
+corepack yarn build
+gem build railsui_tables.gemspec
+npm pack --dry-run
+```
+
+The Ruby version, npm version, installer asset names, and generated JavaScript
+are intentional release boundaries. Keep them aligned before publishing.
+
+## License
+
+MIT. See [LICENSE.md](LICENSE.md).
