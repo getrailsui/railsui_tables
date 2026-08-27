@@ -66,9 +66,9 @@ registerRailsuiTables(application)
 
 ### Styling
 
-The default stylesheet uses `--railsui-table-*` tokens and includes responsive
-row labels for small screens. Set those tokens in the host design system to
-match a non-Rails-UI application.
+The default stylesheet uses `--railsui-table-*` tokens, includes responsive row
+labels for small screens, and supplies light and `.dark` defaults. Set those
+tokens in the host design system to match a non-Rails-UI application.
 
 Tailwind v4 applications can map the tokens to Tailwind color variables:
 

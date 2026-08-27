@@ -8,6 +8,14 @@
   --railsui-table-font: inherit;
 }
 
+.dark .railsui-table-wrap {
+  --railsui-table-bg: #0a0a0a;
+  --railsui-table-fg: #f5f5f5;
+  --railsui-table-muted: #a3a3a3;
+  --railsui-table-border: #262626;
+  --railsui-table-hover: #171717;
+}
+
 .railsui-table-wrap { color: var(--railsui-table-fg); font-family: var(--railsui-table-font); }
 .railsui-table__scroll { overflow-x: auto; border: 1px solid var(--railsui-table-border); border-radius: var(--railsui-table-radius); background: var(--railsui-table-bg); }
 .railsui-table { width: 100%; min-width: 42rem; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4; }
