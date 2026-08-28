@@ -16,7 +16,7 @@ module RailsuiTables
 
       pagination = railsui_table_pagination(pagy) if pagy
       content = content_tag(:section, safe_join([body, pagination].compact), id: table_id, class: "railsui-table-wrap", data: { controller: "railsui-table" })
-      frame && respond_to?(:turbo_frame_tag) ? turbo_frame_tag(table_id, content) : content
+      frame && respond_to?(:turbo_frame_tag) ? turbo_frame_tag(table_id) { content } : content
     end
 
     def railsui_table_filter_form(url: request.path, frame: nil, html: {}, &block)
