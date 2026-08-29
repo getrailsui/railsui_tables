@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "build": "esbuild app/javascript/railsui_tables/index.js --bundle --format=esm --external:@hotwired/stimulus --outfile=app/assets/javascripts/railsui_tables.js",
-    "test": "node --test test/javascript/*.test.mjs"
+    "test": "node --import ./test/javascript/stubs.mjs --test test/javascript/*.test.mjs"
   },
   "peerDependencies": {
     "@hotwired/stimulus": ">=3.0.0"

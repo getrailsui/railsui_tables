@@ -9,6 +9,7 @@ class PagyAdapterTest < Minitest::Test
 
   def test_uses_object_navigation_for_current_pagy
     pagy = Object.new
+    pagy.define_singleton_method(:pages) { 2 }
     pagy.define_singleton_method(:series_nav) { "current navigation" }
 
     assert_equal "current navigation", @view.railsui_table_pagination(pagy)
@@ -21,5 +22,12 @@ class PagyAdapterTest < Minitest::Test
 
     assert_equal "legacy navigation", @view.railsui_table_pagination(pagy)
     assert_same pagy, received
+  end
+
+  def test_hides_navigation_for_a_single_page
+    pagy = Object.new
+    pagy.define_singleton_method(:pages) { 1 }
+
+    assert_nil @view.railsui_table_pagination(pagy)
   end
 end

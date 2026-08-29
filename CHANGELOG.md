@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Added accessible expandable rows with lazy Turbo Frame detail loading.
+- Added preserved nested GET parameters to table filter forms.
+- Added advancing Turbo Frame navigation so table state is reflected in browser history.
+- Kept frame and inner table-wrapper IDs unique.
+- Hid one-page Pagy navigation.
+
 ## 0.1.0
 
 - Initial public release.

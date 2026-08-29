@@ -5,6 +5,7 @@ module RailsuiTables
     module Pagy
       def railsui_table_pagination(pagy)
         return unless pagy
+        return if pagy.respond_to?(:pages) && pagy.pages.to_i <= 1
         return pagy.series_nav.html_safe if pagy.respond_to?(:series_nav)
         return pagy_nav(pagy) if respond_to?(:pagy_nav)
 

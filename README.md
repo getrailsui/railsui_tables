@@ -112,6 +112,20 @@ lambda for display values that do not map directly to a model method:
 Pass a block for fully custom per-cell output. The block receives the record
 and normalized column object.
 
+### Expandable Detail Rows
+
+Pass an allowlisted detail URL to add a collapsed row for each record. The
+detail request is made only after the row is opened; the host endpoint should
+render the matching Turbo Frame and perform its own authorization:
+
+```erb
+<%= railsui_table id: :users, records: @users, columns: [:name, :email],
+      expandable: { url: ->(user) { user_details_path(user) } } %>
+```
+
+The helper provides the button, accessible state, and lazy frame loading. It
+does not add a detail route, query the database, or authorize access.
+
 ## Filters, Sorting, and Pagination
 
 Keep table state in the URL. This makes a filtered view linkable, works before
@@ -126,7 +140,11 @@ end
 ```
 
 ```erb
-<%= railsui_table_filter_form(url: users_path, frame: :users) do %>
+<%= railsui_table_filter_form(
+      url: users_path,
+      frame: :users,
+      preserve: { columns: params[:columns] }
+    ) do %>
   <%= search_field_tag "q[name_or_email_cont]", params.dig(:q, :name_or_email_cont),
         placeholder: "Search users",
         data: { action: "input->railsui-table-filter#queueSubmit" } %>
@@ -139,14 +157,17 @@ end
 With `query: @q`, sortable columns use Ransack's `sort_link`. With `pagy:
 @pagy`, the helper uses `pagy_nav`; include Pagy's frontend helpers in the host
 application as normal. The filter controller debounces `requestSubmit` by
-250ms but the form remains a standard GET form.
+250ms but the form remains a standard GET form. Use `preserve:` for URL-backed
+state owned by another control, such as `columns[]`; nested hashes and arrays
+are emitted as hidden fields.
 
 ## Turbo Behavior
 
 `railsui_table` wraps its content in a Turbo Frame by default. Its `id:` is the
-frame identifier, so the filter form should use the same `frame:` value. Pass
-`frame: false` for a full-page table or when the surrounding template owns the
-frame.
+frame identifier, while the inner section uses `<id>_table` so both DOM IDs
+remain unique. The frame and targeted filter form use `data-turbo-action="advance"`
+so sorting, filtering, and pagination update browser history. Pass `frame:
+false` for a full-page table or when the surrounding template owns the frame.
 
 Turbo Streams should replace the frame or row the host application owns. The
 gem does not subscribe to model updates, reorder collections, or invent stream
@@ -167,6 +188,7 @@ authorizing each selected record and mutation.
 
 ```bash
 bundle exec rake test
+corepack yarn test
 corepack yarn build
 gem build railsui_tables.gemspec
 npm pack --dry-run
