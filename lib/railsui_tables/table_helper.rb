@@ -2,14 +2,15 @@
 
 module RailsuiTables
   module TableHelper
-    def railsui_table(id:, records:, columns:, query: nil, pagy: nil, frame: true, empty: "No records found.", row_id: nil, row_url: nil, expandable: nil, &row_block)
+    def railsui_table(id:, records:, columns:, query: nil, pagy: nil, frame: true, empty: "No records found.", row_id: nil, row_url: nil, expandable: nil, sticky_header: false, zebra: false, density: :comfortable, frozen_first_column: false, &row_block)
       table_id = id.to_s
       built_columns = columns.map { |column| RailsuiTables::Column.build(column) }
       expandable_options = railsui_table_expandable_options(expandable)
       built_columns.unshift(railsui_table_expandable_column) if expandable_options
+      table_class = railsui_table_classes(sticky_header: sticky_header, zebra: zebra, density: density, frozen_first_column: frozen_first_column)
       body = content_tag(:div, class: "railsui-table__viewport") do
         content_tag(:div, class: "railsui-table__scroll") do
-          content_tag(:table, class: "railsui-table", data: { railsui_table_target: "table" }) do
+          content_tag(:table, class: table_class, data: { railsui_table_target: "table" }) do
             safe_join([
               railsui_table_header(built_columns, query),
               railsui_table_body(records, built_columns, empty, row_id, row_url, expandable_options, table_id, row_block)
@@ -24,14 +25,51 @@ module RailsuiTables
       frame && respond_to?(:turbo_frame_tag) ? turbo_frame_tag(table_id, data: { turbo_action: "advance" }) { content } : content
     end
 
-    def railsui_table_filter_form(url: request.path, frame: nil, preserve: {}, html: {}, &block)
-      options = { method: :get, class: "railsui-table-filter", data: { controller: "railsui-table-filter", turbo_frame: frame, turbo_action: ("advance" if frame) }.compact }.merge(html)
+    # A shimmering placeholder that mirrors the table's structure — render it in
+    # a lazy Turbo Frame's default content while the real query loads.
+    def railsui_table_skeleton(columns:, rows: 5, density: :comfortable, sticky_header: false)
+      column_count = columns.is_a?(Integer) ? columns : Array(columns).length
+      table_class = railsui_table_classes(sticky_header: sticky_header, zebra: false, density: density, frozen_first_column: false, skeleton: true)
+      bar = content_tag(:span, "", class: "railsui-table__skeleton-bar")
+      content_tag(:div, class: "railsui-table-wrap") do
+        content_tag(:div, class: "railsui-table__viewport") do
+          content_tag(:div, class: "railsui-table__scroll") do
+            content_tag(:table, class: table_class, aria: { hidden: "true" }) do
+              safe_join([
+                content_tag(:thead) do
+                  content_tag(:tr) { safe_join(Array.new(column_count) { content_tag(:th, bar) }) }
+                end,
+                content_tag(:tbody) do
+                  safe_join(Array.new(rows) do
+                    content_tag(:tr) { safe_join(Array.new(column_count) { content_tag(:td, bar) }) }
+                  end)
+                end
+              ])
+            end
+          end
+        end
+      end
+    end
+
+    def railsui_table_filter_form(url: request.path, frame: nil, preserve: {}, html: {}, auto: true, &block)
+      data = { controller: "railsui-table-filter", turbo_frame: frame, turbo_action: ("advance" if frame), railsui_table_filter_auto_value: auto }.compact
+      options = { method: :get, class: "railsui-table-filter", data: data }.merge(html)
       form_with(url: url, **options) do |form|
         safe_join([railsui_table_hidden_fields(preserve), capture(form, &block)])
       end
     end
 
     private
+
+    def railsui_table_classes(sticky_header:, zebra:, density:, frozen_first_column:, skeleton: false)
+      classes = ["railsui-table"]
+      classes << "railsui-table--sticky-header" if sticky_header
+      classes << "railsui-table--zebra" if zebra
+      classes << "railsui-table--compact" if density.to_s == "compact"
+      classes << "railsui-table--frozen-first" if frozen_first_column
+      classes << "railsui-table--skeleton" if skeleton
+      classes.join(" ")
+    end
 
     def railsui_table_header(columns, query)
       content_tag(:thead) do

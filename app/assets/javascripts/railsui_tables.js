@@ -7,19 +7,27 @@ var railsui_table_controller_default = class extends Controller {
 // app/javascript/controllers/railsui_table_filter_controller.js
 import { Controller as Controller2 } from "@hotwired/stimulus";
 var railsui_table_filter_controller_default = class extends Controller2 {
-  static values = { delay: { type: Number, default: 250 } };
+  static values = {
+    delay: { type: Number, default: 250 },
+    // Type-to-filter by default. Set to false (auto: false on the helper) to
+    // revert to a normal form that only submits on its button / Enter.
+    auto: { type: Boolean, default: true }
+  };
   connect() {
-    this.submit = this.submit.bind(this);
-  }
-  queueSubmit() {
-    clearTimeout(this.timeout);
-    this.timeout = setTimeout(this.submit, this.delayValue);
-  }
-  submit() {
-    this.element.requestSubmit();
+    if (!this.autoValue) return;
+    this.boundQueue = () => this.queueSubmit();
+    this.element.addEventListener("input", this.boundQueue);
   }
   disconnect() {
     clearTimeout(this.timeout);
+    if (this.boundQueue) this.element.removeEventListener("input", this.boundQueue);
+  }
+  queueSubmit() {
+    clearTimeout(this.timeout);
+    this.timeout = setTimeout(() => this.submit(), this.delayValue);
+  }
+  submit() {
+    this.element.requestSubmit();
   }
 };
 
