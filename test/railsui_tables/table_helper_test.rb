@@ -123,6 +123,16 @@ class TableHelperTest < Minitest::Test
     assert_includes html, "railsui-table--zebra"
     assert_includes html, "railsui-table--compact"
     assert_includes html, "railsui-table--frozen-first"
+    assert_includes html, "railsui-table__viewport--sticky"
+  end
+
+  def test_sticky_header_off_leaves_the_viewport_unconstrained
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+
+    html = view.railsui_table(id: :users, records: [], frame: false, columns: [:name])
+
+    refute_includes html, "railsui-table__viewport--sticky"
   end
 
   def test_skeleton_renders_placeholder_bars

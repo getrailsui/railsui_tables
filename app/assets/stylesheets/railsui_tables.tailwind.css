@@ -6,6 +6,7 @@
     --railsui-table-border: var(--color-zinc-200);
     --railsui-table-hover: var(--color-zinc-50);
     --railsui-table-accent: var(--color-indigo-600);
+    --railsui-table-sticky-max-height: 28rem;
   }
 
   .dark {

@@ -8,7 +8,7 @@ module RailsuiTables
       expandable_options = railsui_table_expandable_options(expandable)
       built_columns.unshift(railsui_table_expandable_column) if expandable_options
       table_class = railsui_table_classes(sticky_header: sticky_header, zebra: zebra, density: density, frozen_first_column: frozen_first_column)
-      body = content_tag(:div, class: "railsui-table__viewport") do
+      body = content_tag(:div, class: railsui_table_viewport_class(sticky_header)) do
         content_tag(:div, class: "railsui-table__scroll") do
           content_tag(:table, class: table_class, data: { railsui_table_target: "table" }) do
             safe_join([
@@ -32,7 +32,7 @@ module RailsuiTables
       table_class = railsui_table_classes(sticky_header: sticky_header, zebra: false, density: density, frozen_first_column: false, skeleton: true)
       bar = content_tag(:span, "", class: "railsui-table__skeleton-bar")
       content_tag(:div, class: "railsui-table-wrap") do
-        content_tag(:div, class: "railsui-table__viewport") do
+        content_tag(:div, class: railsui_table_viewport_class(sticky_header)) do
           content_tag(:div, class: "railsui-table__scroll") do
             content_tag(:table, class: table_class, aria: { hidden: "true" }) do
               safe_join([
@@ -69,6 +69,14 @@ module RailsuiTables
       classes << "railsui-table--frozen-first" if frozen_first_column
       classes << "railsui-table--skeleton" if skeleton
       classes.join(" ")
+    end
+
+    # A sticky header only works when its scroll container actually scrolls
+    # vertically, and the overflow-x viewport is always the nearest scroll
+    # container — so sticky_header makes the viewport that vertical scroller
+    # (capped by the --railsui-table-sticky-max-height token).
+    def railsui_table_viewport_class(sticky_header)
+      sticky_header ? "railsui-table__viewport railsui-table__viewport--sticky" : "railsui-table__viewport"
     end
 
     def railsui_table_header(columns, query)

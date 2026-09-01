@@ -138,9 +138,19 @@ normalized column as `column`:
 
 ```erb
 <%= railsui_table id: :users, records: @users, columns: [...],
-      sticky_header: true,   # header stays visible while the body scrolls
+      sticky_header: true,   # header stays pinned while the table scrolls
       zebra: true,           # striped rows
       density: :compact %>   # tighter rows (default :comfortable)
+```
+
+`sticky_header: true` turns the table's viewport into a vertically scrolling
+box (a sticky header can only pin to the element that actually scrolls, and
+the table's own overflow wrapper is always the nearest one). The height is
+capped at the `--railsui-table-sticky-max-height` token, `28rem` by default —
+override it per table, or set it to `none` to manage the height yourself:
+
+```css
+#orders_table { --railsui-table-sticky-max-height: 60vh; }
 ```
 
 `frozen_first_column: true` pins the first column while a wide table scrolls

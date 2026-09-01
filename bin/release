@@ -170,7 +170,9 @@ corepack yarn build
 echo "==> Verify the package"
 bundle exec ruby -Itest -Ilib test/railsui_tables/packaging_test.rb
 
-git add Gemfile.lock lib/railsui_tables/version.rb CHANGELOG.md \
+# Gemfile.lock is deliberately absent: it is gitignored so each CI Ruby
+# resolves its own gems, and `git add` on an ignored path exits non-zero.
+git add lib/railsui_tables/version.rb CHANGELOG.md \
         package.json yarn.lock app/assets/javascripts/railsui_tables.js
 
 # The first release has nothing to bump — the version file already says it.

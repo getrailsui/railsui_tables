@@ -11,6 +11,9 @@ public API may change between minor versions.
 - `partial:` column option renders an ERB partial for a cell (the row is passed
   as `record`), so rich cells stay in readable markup instead of a value lambda.
 - `sticky_header:`, `zebra:`, and `density:` options on `railsui_table`.
+  Sticky headers turn the table viewport into a vertically scrolling box capped
+  by the new `--railsui-table-sticky-max-height` token (28rem by default), since
+  a sticky header can only pin to the container that actually scrolls.
 - `frozen_first_column:` option to pin the first column while a wide table
   scrolls horizontally. The styling ships with Rails UI Tables Pro.
 - `railsui_table_skeleton` renders a shimmering loading placeholder for a lazy
@@ -21,6 +24,14 @@ public API may change between minor versions.
 - Preserved nested GET parameters on filter forms.
 - Advancing Turbo Frame navigation so table state is reflected in browser history.
 - Sortable-header indicators with `aria-sort`, and `:focus-visible` rings.
+
+### Fixed
+
+- `bin/release` no longer stages the gitignored `Gemfile.lock`, which made
+  `git add` abort the whole run.
+- Pinned `packageManager: yarn@4.11.0` so Corepack (CI included) runs Yarn 4
+  against the Yarn 4 lockfile instead of falling back to Yarn 1, which ignored
+  `--immutable` and re-resolved dependencies.
 
 ### Changed
 

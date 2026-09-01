@@ -6,6 +6,7 @@
   --railsui-table-hover: #f7f7f7;
   --railsui-table-accent: #4f46e5;
   --railsui-table-font: inherit;
+  --railsui-table-sticky-max-height: 28rem;
 }
 
 /* Scoped to `.dark` (not `.dark .railsui-table-wrap`) so the shared tokens also
@@ -90,6 +91,8 @@ turbo-frame[busy] .railsui-table-wrap { opacity: 0.62; transition: opacity 120ms
 /* Small screens: stack each row into a labelled card */
 @media (max-width: 639px) {
   .railsui-table__viewport { margin: 0; overflow-x: visible; white-space: normal; }
+  /* Stacked cards read top to bottom; an inner scrollbox would trap them. */
+  .railsui-table__viewport--sticky { max-height: none; overflow-y: visible; }
   .railsui-table__scroll { display: block; min-width: 0; padding: 0; }
   .railsui-table { min-width: 0; }
   .railsui-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
@@ -110,8 +113,13 @@ turbo-frame[busy] .railsui-table-wrap { opacity: 0.62; transition: opacity 120ms
   .railsui-table__detail-row > td::before { content: none; }
 }
 
-/* Sticky header — sticks to the nearest scroll ancestor (a max-height wrapper
-   or the viewport). The background keeps rows from showing through. */
+/* Sticky header. The overflow-x viewport is always the header's nearest scroll
+   container, so a sticky th can only stick when that viewport itself scrolls
+   vertically — an outer max-height wrapper never engages it. sticky_header
+   therefore caps the viewport; override the token to change the height, or set
+   it to `none` to manage height yourself. The th background keeps rows from
+   showing through. */
+.railsui-table__viewport--sticky { max-height: var(--railsui-table-sticky-max-height, 28rem); overflow-y: auto; }
 .railsui-table--sticky-header thead th { position: sticky; top: 0; z-index: 2; background: var(--railsui-table-bg); }
 
 /* Zebra striping. The hover rule is repeated at matching specificity, after the
