@@ -97,8 +97,8 @@ Prepare records in the controller, then use column definitions in the view:
 ```
 
 Columns may be symbols, hashes, or `RailsuiTables::Column` objects. A hash can
-provide `label:`, `sortable:`, `cell_class:`, `header_class:`, or a `value:`
-lambda for display values that do not map directly to a model method:
+provide `label:`, `sortable:`, `cell_class:`, `header_class:`, a `value:` lambda,
+or a `partial:` for display values that do not map directly to a model method:
 
 ```erb
 <%= railsui_table id: :subscriptions, records: @subscriptions,
@@ -111,6 +111,50 @@ lambda for display values that do not map directly to a model method:
 
 Pass a block for fully custom per-cell output. The block receives the record
 and normalized column object.
+
+For a rich cell, render a partial instead of a `value:` lambda — it keeps the
+markup in readable ERB. The partial receives the row as `record` and the
+normalized column as `column`:
+
+```erb
+<%= railsui_table id: :members, records: @members,
+      columns: [{ key: :name, label: "Member", partial: "members/cell" }, :role] %>
+```
+
+```erb
+<%# app/views/members/_cell.html.erb %>
+<div class="flex items-center gap-3">
+  <%= image_tag record.avatar_url, class: "size-8 rounded-full" %>
+  <div>
+    <div class="font-medium"><%= record.name %></div>
+    <div class="text-sm text-neutral-500"><%= record.email %></div>
+  </div>
+</div>
+```
+
+### Display options
+
+`railsui_table` takes a few presentational flags, all opt-in:
+
+```erb
+<%= railsui_table id: :users, records: @users, columns: [...],
+      sticky_header: true,   # header stays visible while the body scrolls
+      zebra: true,           # striped rows
+      density: :compact %>   # tighter rows (default :comfortable)
+```
+
+`frozen_first_column: true` pins the first column while a wide table scrolls
+horizontally. The free helper emits the class; the styling that freezes it ships
+with [`railsui_tables_pro`](https://github.com/getrailsui/railsui_tables_pro).
+
+### Loading skeleton
+
+Render a shimmering placeholder — for example as a lazy Turbo Frame's default
+content while the real query loads:
+
+```erb
+<%= railsui_table_skeleton columns: 5, rows: 5 %>
+```
 
 ### Expandable Detail Rows
 
@@ -146,8 +190,7 @@ end
       preserve: { columns: params[:columns] }
     ) do %>
   <%= search_field_tag "q[name_or_email_cont]", params.dig(:q, :name_or_email_cont),
-        placeholder: "Search users",
-        data: { action: "input->railsui-table-filter#queueSubmit" } %>
+        placeholder: "Search users" %>
 <% end %>
 
 <%= railsui_table id: :users, records: @users, query: @q, pagy: @pagy,
@@ -156,10 +199,11 @@ end
 
 With `query: @q`, sortable columns use Ransack's `sort_link`. With `pagy:
 @pagy`, the helper uses `pagy_nav`; include Pagy's frontend helpers in the host
-application as normal. The filter controller debounces `requestSubmit` by
-250ms but the form remains a standard GET form. Use `preserve:` for URL-backed
-state owned by another control, such as `columns[]`; nested hashes and arrays
-are emitted as hidden fields.
+application as normal. The form submits on input (debounced 250ms) by default,
+so no Search button is needed; pass `auto: false` to `railsui_table_filter_form`
+for a standard submit-button GET form instead. Use `preserve:` for URL-backed
+state owned by another control, such as `columns[]`; nested hashes and arrays are
+emitted as hidden fields.
 
 ## Turbo Behavior
 

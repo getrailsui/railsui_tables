@@ -152,6 +152,9 @@ module RailsuiTables
     end
 
     def railsui_table_value(record, column)
+      # partial: keeps rich cells in an ERB partial instead of a value lambda.
+      # The partial receives the row as `record` and the column as `column`.
+      return render(column.partial, record: record, column: column) if column.partial
       return column.value.call(record) if column.value
 
       record.public_send(column.key)

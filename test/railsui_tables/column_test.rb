@@ -17,4 +17,10 @@ class ColumnTest < Minitest::Test
     assert column.sortable
     assert_equal "$12", column.value.call(Struct.new(:total).new(12))
   end
+
+  def test_accepts_a_partial
+    column = RailsuiTables::Column.build(key: :name, partial: "users/member_cell")
+
+    assert_equal "users/member_cell", column.partial
+  end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RailsuiTables
-  Column = Struct.new(:key, :label, :sortable, :value, :cell_class, :header_class, keyword_init: true) do
+  Column = Struct.new(:key, :label, :sortable, :value, :partial, :cell_class, :header_class, keyword_init: true) do
     def self.build(definition)
       return definition if definition.is_a?(self)
 
@@ -14,6 +14,7 @@ module RailsuiTables
         label: definition.fetch(:label, key.to_s.humanize),
         sortable: definition.fetch(:sortable, false),
         value: definition[:value],
+        partial: definition[:partial],
         cell_class: definition[:cell_class],
         header_class: definition[:header_class]
       )

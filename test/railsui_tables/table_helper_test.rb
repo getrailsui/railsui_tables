@@ -66,6 +66,25 @@ class TableHelperTest < Minitest::Test
     assert_includes html, 'colspan="2"'
   end
 
+  def test_renders_a_cell_from_a_partial
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+    view.define_singleton_method(:render) do |partial, record:, column:|
+      %(<span data-partial="#{partial}">#{record.email} (#{column.key})</span>).html_safe
+    end
+    record = Struct.new(:email).new("ada@example.com")
+
+    html = view.railsui_table(
+      id: :users,
+      records: [record],
+      frame: false,
+      columns: [{ key: :email, partial: "users/email_cell" }]
+    )
+
+    assert_includes html, 'data-partial="users/email_cell"'
+    assert_includes html, "ada@example.com (email)"
+  end
+
   def test_row_url_skips_internal_columns
     view = ActionView::Base.empty
     view.extend(RailsuiTables::TableHelper)
@@ -83,5 +102,38 @@ class TableHelperTest < Minitest::Test
 
     assert_includes html, '<td data-label="Railsui table selection">checkbox</td>'
     assert_includes html, '<td data-label="Email"><a class="railsui-table__row-link" href="/users/7">ada@example.com</a></td>'
+  end
+
+  def test_display_options_emit_table_classes
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+
+    html = view.railsui_table(
+      id: :users,
+      records: [],
+      frame: false,
+      columns: [:name],
+      sticky_header: true,
+      zebra: true,
+      density: :compact,
+      frozen_first_column: true
+    )
+
+    assert_includes html, "railsui-table--sticky-header"
+    assert_includes html, "railsui-table--zebra"
+    assert_includes html, "railsui-table--compact"
+    assert_includes html, "railsui-table--frozen-first"
+  end
+
+  def test_skeleton_renders_placeholder_bars
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+
+    html = view.railsui_table_skeleton(columns: 3, rows: 2)
+
+    assert_includes html, "railsui-table--skeleton"
+    assert_includes html, 'aria-hidden="true"'
+    # 3 columns across the header row and each of the 2 body rows.
+    assert_equal 9, html.scan("railsui-table__skeleton-bar").length
   end
 end

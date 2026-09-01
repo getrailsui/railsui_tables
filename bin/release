@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+# Cut a release: write the version, commit, build, publish, and create its
+# GitHub Release from the CHANGELOG notes.
+#
+#   bin/release 0.1.0
+#
+# Borrowed from the railsui gem. The guards are the difference: a pushed
+# version number can never be pushed again, so everything that can be checked
+# before the push happens before the push.
+set -euo pipefail
+
+VERSION=${1:-}
+TAG="v$VERSION"
+
+if [ -z "$VERSION" ]; then
+  echo "Usage: bin/release 0.1.0" >&2
+  exit 1
+fi
+
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.]+)?$ ]]; then
+  echo "Version should look like 0.1.0 — got '$VERSION'" >&2
+  exit 1
+fi
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Working tree is not clean. Commit or stash first." >&2
+  exit 1
+fi
+
+if [ "$(git branch --show-current)" != "main" ]; then
+  echo "Releases must be cut from main." >&2
+  exit 1
+fi
+
+# A tag on a feature branch is not a release of the default branch consumers
+# install from. Fetch first so an otherwise stale origin/main cannot bless it.
+git fetch origin main --tags
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+  echo "main must match origin/main before releasing. Push or pull first." >&2
+  exit 1
+fi
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "GitHub CLI is required. Install and authenticate \`gh\` first." >&2
+  exit 1
+fi
+
+# A failed final API call can leave the registries and tag published without a
+# GitHub Release. Treat that as resumable, but never reuse a version whose tag
+# points at some other commit.
+TAG_PUBLISHED=false
+if git rev-parse "$TAG" >/dev/null 2>&1; then
+  if [ "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]; then
+    echo "Tag $TAG already exists on a different commit." >&2
+    exit 1
+  fi
+  TAG_PUBLISHED=true
+fi
+
+GITHUB_RELEASE_PUBLISHED=false
+if gh release view "$TAG" >/dev/null 2>&1; then
+  GITHUB_RELEASE_PUBLISHED=true
+fi
+
+if [ "$GITHUB_RELEASE_PUBLISHED" != true ] && ! gh auth status >/dev/null 2>&1; then
+  echo "Not logged in to GitHub CLI. Run \`gh auth login\` first." >&2
+  exit 1
+fi
+
+RELEASE_KIND=
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  RELEASE_KIND=--prerelease
+fi
+
+# The CHANGELOG is the only record of what a version contains, and it is written
+# by hand, so nothing but a check here keeps it honest.
+#
+# --check reads it and writes nothing: the notes are wanted now, for the prompt
+# below, but the file should not be touched until the release is going ahead.
+if ! NOTES=$(bin/changelog --check "$VERSION"); then
+  exit 1
+fi
+
+# The two registries cannot be published atomically. Record which one already
+# has the version so a rerun completes a partial release instead of rejecting
+# the one registry that did succeed.
+GEM_PUBLISHED=false
+if [ "$(curl -sS -o /dev/null -w '%{http_code}' \
+        "https://rubygems.org/api/v2/rubygems/railsui_tables/versions/$VERSION.json" || true)" = "200" ]; then
+  GEM_PUBLISHED=true
+fi
+
+NPM_PUBLISHED=false
+if npm view "@getrailsui/tables@$VERSION" version >/dev/null 2>&1; then
+  NPM_PUBLISHED=true
+fi
+
+if [ "$GEM_PUBLISHED" = true ] || [ "$NPM_PUBLISHED" = true ]; then
+  echo "Resuming a partial release: RubyGems=$GEM_PUBLISHED npm=$NPM_PUBLISHED"
+fi
+
+if [ "$NPM_PUBLISHED" != true ] && ! npm whoami >/dev/null 2>&1; then
+  echo "Not logged in to npm. Run \`npm login\` first." >&2
+  exit 1
+fi
+
+# Asked of RubyGems rather than guessed at: the credentials file follows XDG
+# where that is set, so ~/.gem/credentials is the wrong place to look on this
+# machine and on plenty of others.
+if [ "$GEM_PUBLISHED" != true ] && [ -z "${GEM_HOST_API_KEY:-}" ] && ! ruby -e '
+  require "rubygems/config_file"
+  path = Gem.configuration.credentials_path
+  exit(File.exist?(path) && File.read(path).include?("rubygems_api_key") ? 0 : 1)
+' 2>/dev/null; then
+  echo "No RubyGems credentials. Run \`gem signin\` first." >&2
+  exit 1
+fi
+
+# What is actually about to ship, against what the CHANGELOG claims. These come
+# apart when work lands after the entry is written — the tag goes on HEAD, not
+# on the commit that prepared the notes, and the difference ships undocumented.
+PREVIOUS=$(git describe --tags --abbrev=0 2>/dev/null || true)
+echo "==> Releasing $VERSION"
+echo
+if [ -n "$PREVIOUS" ]; then
+  echo "Commits since $PREVIOUS:"
+  git log --oneline "$PREVIOUS..HEAD" | sed 's/^/    /'
+else
+  echo "First release."
+fi
+echo
+echo "CHANGELOG for $VERSION:"
+printf '%s\n' "$NOTES" | sed 's/^/    /'
+echo
+
+if [ "${RELEASE_YES:-}" != "1" ]; then
+  read -r -p "Does the CHANGELOG cover every commit above? [y/N] " reply
+  case "$reply" in
+    [yY]*) ;;
+    *) echo "Stopped." >&2; exit 1 ;;
+  esac
+fi
+
+echo "==> Tests"
+bundle exec rake test
+
+# Now that the release is going ahead: promote [Unreleased] to the number, and
+# move the compare links with it. Doing this by hand is what came apart twice —
+# entries written under [Unreleased], released without the heading being
+# renamed, then relabelled by the next release as its own.
+echo "==> CHANGELOG"
+bin/changelog "$VERSION"
+
+echo "==> Version $VERSION"
+printf '# frozen_string_literal: true\n\nmodule RailsuiTables\n  VERSION = "%s"\nend\n' "$VERSION" > ./lib/railsui_tables/version.rb
+# One writer for both, because the packaging test asserts they match and a
+# subscriber reading two different numbers has no way to tell which is right.
+npm pkg set version="$VERSION"
+corepack yarn install --silent
+bundle
+
+echo "==> Build the importmap bundle"
+# Rebuilt every release: this file is what importmap applications are served,
+# and a stale one is a fix that ships to npm and not to them.
+corepack yarn build
+
+# Again, against the built artifact this time. The packaging test rebuilds and
+# compares, so this is what catches a bundle that did not come out of the
+# sources the gem is about to ship.
+echo "==> Verify the package"
+bundle exec ruby -Itest -Ilib test/railsui_tables/packaging_test.rb
+
+git add Gemfile.lock lib/railsui_tables/version.rb CHANGELOG.md \
+        package.json yarn.lock app/assets/javascripts/railsui_tables.js
+
+# The first release has nothing to bump — the version file already says it.
+# `git commit` exits non-zero on an empty commit, which under `set -e` killed
+# the run before the tag. Same on a re-run after a failed push.
+if git diff --cached --quiet; then
+  echo "    version file already at $VERSION, nothing to commit"
+else
+  git commit -m "Bump version for $VERSION"
+fi
+
+git push
+
+echo "==> Build and push"
+gem build railsui_tables.gemspec
+trap 'rm -f "railsui_tables-$VERSION.gem"' EXIT
+if [ "$GEM_PUBLISHED" = true ]; then
+  echo "    RubyGems already has railsui_tables $VERSION; skipping"
+else
+  gem push "railsui_tables-$VERSION.gem" --host https://rubygems.org
+fi
+
+echo "==> npm publish"
+# --access public because a scoped package is private by default, and the first
+# publish of @getrailsui/tables would otherwise land where nobody can install it.
+if [ "$NPM_PUBLISHED" = true ]; then
+  echo "    npm already has @getrailsui/tables $VERSION; skipping"
+else
+  npm publish --access public
+fi
+
+# The GitHub Release is created last, so its tag means the version reached both
+# registries. `gh release create` creates a missing tag and the release notes in
+# one operation. A rerun can also attach the release to an existing tag left by
+# an interrupted attempt.
+echo "==> GitHub Release"
+if [ "$GITHUB_RELEASE_PUBLISHED" = true ]; then
+  echo "    GitHub Release $TAG already exists; skipping"
+elif [ "$TAG_PUBLISHED" = true ]; then
+  gh release create "$TAG" --verify-tag \
+    ${RELEASE_KIND:+"$RELEASE_KIND"} \
+    --title "Rails UI Tables $TAG" --notes "$NOTES"
+else
+  RELEASE_SHA=$(git rev-parse HEAD)
+  gh release create "$TAG" --target "$RELEASE_SHA" \
+    ${RELEASE_KIND:+"$RELEASE_KIND"} \
+    --title "Rails UI Tables $TAG" --notes "$NOTES"
+  git fetch origin tag "$TAG"
+fi
+
+echo "==> Published railsui_tables $VERSION (gem, @getrailsui/tables, and GitHub Release)"
