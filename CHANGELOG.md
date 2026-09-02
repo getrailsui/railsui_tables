@@ -27,6 +27,10 @@ public API may change between minor versions.
 
 ### Fixed
 
+- Dark mode now works under every strategy: the dark tokens answer to
+  `prefers-color-scheme` (Tailwind's default `media` strategy compiles `dark:`
+  utilities there and never sets a class) as well as the `.dark` class and
+  `[data-theme="dark"]`, matching the charts gem.
 - `bin/release` no longer stages the gitignored `Gemfile.lock`, which made
   `git add` abort the whole run.
 - Pinned `packageManager: yarn@4.11.0` so Corepack (CI included) runs Yarn 4

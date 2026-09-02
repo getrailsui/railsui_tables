@@ -9,11 +9,27 @@
   --railsui-table-sticky-max-height: 28rem;
 }
 
+/* Dark tokens answer to both strategies, like the charts gem: the media query
+   covers Tailwind's default `darkMode: media` (where `dark:` utilities compile
+   into a prefers-color-scheme block and no `.dark` class ever exists), and the
+   class/attribute selectors cover class-strategy hosts and theme switchers. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --railsui-table-bg: #0a0a0a;
+    --railsui-table-fg: #f5f5f5;
+    --railsui-table-muted: #a3a3a3;
+    --railsui-table-border: #262626;
+    --railsui-table-hover: #171717;
+    --railsui-table-accent: #818cf8;
+  }
+}
+
 /* Scoped to `.dark` (not `.dark .railsui-table-wrap`) so the shared tokens also
    reach Pro chrome — bulk bar, saved-views/columns menus — rendered in toolbars
    outside the table wrapper. All tokens are namespaced, so this is inert for
    non-table elements. */
-.dark {
+.dark,
+[data-theme="dark"] {
   --railsui-table-bg: #0a0a0a;
   --railsui-table-fg: #f5f5f5;
   --railsui-table-muted: #a3a3a3;
