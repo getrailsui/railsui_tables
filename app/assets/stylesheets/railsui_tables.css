@@ -104,9 +104,9 @@ turbo-frame[busy] .railsui-table-wrap { opacity: 0.62; transition: opacity 120ms
 /* Expandable rows */
 .railsui-table__expander-header, .railsui-table__expander { width: 2.75rem; }
 .railsui-table__expander { padding-right: 0.25rem; }
-.railsui-table__expand { display: inline-flex; align-items: center; justify-content: center; width: 1.875rem; height: 1.875rem; padding: 0; border: 0; border-radius: 9999px; background: transparent; color: var(--railsui-table-muted); cursor: pointer; transition: background 140ms ease, color 140ms ease; }
-.railsui-table__expand:hover { background: color-mix(in srgb, var(--railsui-table-fg, #171717) 8%, transparent); color: var(--railsui-table-fg); }
-.railsui-table__expand:active { background: color-mix(in srgb, var(--railsui-table-fg, #171717) 14%, transparent); }
+.railsui-table__expand { display: inline-flex; align-items: center; justify-content: center; width: 1.875rem; height: 1.875rem; padding: 0; border: 1px solid var(--railsui-table-btn-border, #e5e5e5); border-radius: 9999px; background: var(--railsui-table-btn-bg, #fff); box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); color: var(--railsui-table-muted); cursor: pointer; transition: background 140ms ease, color 140ms ease, border-color 140ms ease; }
+.railsui-table__expand:hover { background: var(--railsui-table-btn-hover, #f7f7f7); border-color: color-mix(in srgb, var(--railsui-table-btn-border, #e5e5e5) 55%, var(--railsui-table-muted, #737373)); color: var(--railsui-table-fg); }
+.railsui-table__expand:active { background: color-mix(in srgb, var(--railsui-table-fg, #171717) 10%, transparent); }
 .railsui-table__expand::before { content: ""; width: 0.5rem; height: 0.5rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; border-bottom-right-radius: 1px; transform: translateX(-1px) rotate(-45deg); transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1); }
 .railsui-table__expand[aria-expanded="true"]::before { transform: translateY(-1px) rotate(45deg); }
 .railsui-table__detail-row > td { background: var(--railsui-table-hover); padding: 1rem 0.75rem; }

@@ -49,6 +49,8 @@ public API may change between minor versions.
 
 ### Changed
 
+- The expand button is a bordered, surfaced icon button on the button tokens
+  instead of a ghost chevron.
 - Row hover is a clean full-row highlight; removed the fragile box-shadow bleed
   that misaligned inside padded containers.
 - Roomier default row padding and a smoother hover transition.
