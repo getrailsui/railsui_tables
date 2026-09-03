@@ -6,6 +6,7 @@
     --railsui-table-border: var(--color-zinc-200);
     --railsui-table-hover: var(--color-zinc-50);
     --railsui-table-accent: var(--color-indigo-600);
+    --railsui-table-danger: var(--color-rose-600);
     --railsui-table-sticky-max-height: 28rem;
   }
 
@@ -16,5 +17,6 @@
     --railsui-table-border: var(--color-zinc-800);
     --railsui-table-hover: var(--color-zinc-900);
     --railsui-table-accent: var(--color-indigo-400);
+    --railsui-table-danger: var(--color-rose-400);
   }
 }

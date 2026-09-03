@@ -8,6 +8,10 @@ public API may change between minor versions.
 
 ### Added
 
+- Button and control theming tokens: `--railsui-table-btn-*` (radius, surface,
+  border, hover, and a primary pair) plus `--railsui-table-danger`, derived
+  from the base tokens so they follow the theme and dark mode. The Pro toolbar
+  and menus consume them too.
 - Rails helpers for responsive, Turbo Frame-aware index tables.
 - Optional Ransack sort links and Pagy navigation integration, supporting both
   Pagy 43 object navigation and legacy view helpers.

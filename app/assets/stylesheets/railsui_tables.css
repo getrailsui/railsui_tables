@@ -5,8 +5,20 @@
   --railsui-table-border: #e5e5e5;
   --railsui-table-hover: #f7f7f7;
   --railsui-table-accent: #4f46e5;
+  --railsui-table-danger: #e11d48;
   --railsui-table-font: inherit;
   --railsui-table-sticky-max-height: 28rem;
+
+  /* Buttons. Derived from the base tokens so they follow the theme (and dark
+     mode) automatically — override them to restyle every control at once, or
+     target the stable .railsui-table-* classes to replace a single one. */
+  --railsui-table-btn-radius: 0.5rem;
+  --railsui-table-btn-bg: var(--railsui-table-bg);
+  --railsui-table-btn-fg: var(--railsui-table-fg);
+  --railsui-table-btn-border: var(--railsui-table-border);
+  --railsui-table-btn-hover: var(--railsui-table-hover);
+  --railsui-table-btn-primary-bg: var(--railsui-table-fg);
+  --railsui-table-btn-primary-fg: var(--railsui-table-bg);
 }
 
 /* Dark tokens answer to both strategies, like the charts gem: the media query
@@ -21,6 +33,7 @@
     --railsui-table-border: #262626;
     --railsui-table-hover: #171717;
     --railsui-table-accent: #818cf8;
+    --railsui-table-danger: #fb7185;
   }
 }
 
@@ -36,6 +49,7 @@
   --railsui-table-border: #262626;
   --railsui-table-hover: #171717;
   --railsui-table-accent: #818cf8;
+  --railsui-table-danger: #fb7185;
 }
 
 .railsui-table-wrap { color: var(--railsui-table-fg); font-family: var(--railsui-table-font); }

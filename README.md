@@ -66,19 +66,47 @@ registerRailsuiTables(application)
 
 ### Styling
 
-The default stylesheet uses `--railsui-table-*` tokens, includes responsive row
-labels for small screens, and supplies light and `.dark` defaults. Set those
-tokens in the host design system to match a non-Rails-UI application.
+The default stylesheet is driven entirely by `--railsui-table-*` tokens, with
+dark values that answer both `prefers-color-scheme` and a `.dark` class /
+`[data-theme="dark"]`. It includes responsive row labels for small screens.
 
-Tailwind v4 applications can map the tokens to Tailwind color variables:
+Three levels of control:
+
+1. **Theme it** — set the base tokens (`--railsui-table-bg`, `-fg`, `-muted`,
+   `-border`, `-hover`, `-accent`, `-danger`, `-font`) once and every table and
+   control follows, dark mode included.
+2. **Extend it** — buttons and controls (including the Pro toolbar, saved
+   views, and column menus) draw from derived button tokens, so one override
+   restyles them all:
+
+   ```css
+   :root {
+     --railsui-table-btn-radius: 9999px;              /* pill buttons */
+     --railsui-table-btn-primary-bg: var(--railsui-table-accent);
+     --railsui-table-btn-primary-fg: #fff;
+   }
+   ```
+
+   Scope to a table id (`#users_table { … }`) to restyle a single table.
+3. **Replace it** — every element carries a stable, namespaced class
+   (`.railsui-table__expand`, `.railsui-table-filter`, and the Pro
+   `.railsui-table-bulk__bar`, `.railsui-table-saved-views__*`,
+   `.railsui-table-columns__*`). The gem never inlines styles, so your CSS
+   (or `@apply` rules) can restyle or fully replace any of them — or skip the
+   gem stylesheet and write your own against the same markup.
+
+Tailwind v4 applications can additionally map the tokens to Tailwind color
+variables by importing the adapter **alongside** the base stylesheet:
 
 ```css
 /* app/assets/tailwind/application.css */
+@import "@getrailsui/tables/styles.css";
 @import "@getrailsui/tables/tailwind.css";
 ```
 
-Use either the asset-pipeline stylesheet or your own bundled CSS import, not
-both.
+The adapter contains tokens only; the base stylesheet carries the structure.
+Load the base once — via the asset pipeline `stylesheet_link_tag` or the
+bundled import, not both.
 
 ## Basic Table
 
