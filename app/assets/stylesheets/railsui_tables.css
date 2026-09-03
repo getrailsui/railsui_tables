@@ -141,6 +141,16 @@ turbo-frame[busy] .railsui-table-wrap { opacity: 0.62; transition: opacity 120ms
   .railsui-table--skeleton .railsui-table__skeleton-bar { width: 100%; }
   .railsui-table__detail-row > td { display: block; text-align: left; }
   .railsui-table__detail-row > td::before { content: none; }
+  /* Group chrome and the grand-total row stack like the detail row: plain
+     blocks, no data-label prefix, and empty summary cells disappear. */
+  .railsui-table tfoot tr { display: block; padding: 0.5rem 0; }
+  .railsui-table .railsui-table__group-header > td,
+  .railsui-table .railsui-table__group-footer > td,
+  .railsui-table .railsui-table__total-row > td { display: block; padding: 0.35rem 0; text-align: left; }
+  .railsui-table .railsui-table__group-header > td::before,
+  .railsui-table .railsui-table__group-footer > td::before { content: none; }
+  .railsui-table .railsui-table__group-footer > td:empty,
+  .railsui-table .railsui-table__total-row > td:empty { display: none; }
 }
 
 /* Sticky header. The overflow-x viewport is always the header's nearest scroll
@@ -159,6 +169,17 @@ turbo-frame[busy] .railsui-table-wrap { opacity: 0.62; transition: opacity 120ms
 
 /* Compact density — tighter vertical rhythm, same horizontal padding. */
 .railsui-table--compact th, .railsui-table--compact td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+
+/* Row grouping. The helper renders the structure — group header rows, subtotal
+   rows, a grand-total row — and this only keeps it legible; the polished
+   treatment (sticky group headers, tinted subtotals) ships with Pro, hooked on
+   .railsui-table--grouped. Group rows are chrome, not data rows, so they skip
+   the row hover. */
+.railsui-table__group-header > td { border-top: 1px solid var(--railsui-table-border); color: var(--railsui-table-muted); font-size: 0.8125rem; font-weight: 600; }
+.railsui-table__group-footer > td { font-weight: 600; }
+.railsui-table__total-row > td { border-top: 2px solid var(--railsui-table-border); font-weight: 600; }
+.railsui-table .railsui-table__group-header:hover > td,
+.railsui-table .railsui-table__group-footer:hover > td { background: transparent; }
 
 /* Loading skeleton */
 .railsui-table--skeleton thead .railsui-table__skeleton-bar { width: 50%; }

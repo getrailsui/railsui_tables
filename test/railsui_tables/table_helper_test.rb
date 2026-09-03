@@ -146,4 +146,96 @@ class TableHelperTest < Minitest::Test
     # 3 columns across the header row and each of the 2 body rows.
     assert_equal 9, html.scan("railsui-table__skeleton-bar").length
   end
+
+  Account = Struct.new(:name, :plan, :mrr)
+
+  def test_grouped_rows_render_group_headers_in_record_order
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+    records = [Account.new("Ada", "Pro", 49), Account.new("Grace", "Pro", 49), Account.new("Joan", "Free", 0)]
+
+    html = view.railsui_table(id: :accounts, records: records, frame: false, group_by: :plan, columns: [:name, :mrr])
+
+    assert_includes html, "railsui-table--grouped"
+    assert_includes html, '<tr class="railsui-table__group-header"><td colspan="2" data-railsui-table-group="Pro">Pro</td></tr>'
+    # Records are chunked in the order given — the host controls ordering.
+    assert_equal ["Pro", "Free"], html.scan(/data-railsui-table-group="([^"]+)"/).flatten
+    refute_includes html, '<tr class="railsui-table__group-header" data-railsui-table-target'
+  end
+
+  def test_grouped_header_colspan_counts_the_expander_column
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+    records = [Account.new("Ada", "Pro", 49)]
+
+    html = view.railsui_table(
+      id: :accounts,
+      records: records,
+      frame: false,
+      group_by: ->(account) { account.plan },
+      columns: [:name, :mrr],
+      expandable: { url: ->(_account) { "/accounts/details" } }
+    )
+
+    assert_includes html, '<td colspan="3" data-railsui-table-group="Pro">Pro</td>'
+    assert_includes html, "railsui-table__expand"
+  end
+
+  def test_group_totals_align_to_their_columns
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+    records = [Account.new("Ada", "Pro", 49), Account.new("Grace", "Pro", 21), Account.new("Joan", "Free", 0)]
+
+    html = view.railsui_table(
+      id: :accounts,
+      records: records,
+      frame: false,
+      group_by: :plan,
+      group_totals: { mrr: ->(rows) { rows.sum(&:mrr) } },
+      columns: [:name, { key: :mrr, cell_class: "railsui-table__actions" }]
+    )
+
+    assert_includes html, '<tr class="railsui-table__group-footer"><td>Pro total</td><td class="railsui-table__actions">70</td></tr>'
+    assert_includes html, '<tr class="railsui-table__group-footer"><td>Free total</td><td class="railsui-table__actions">0</td></tr>'
+  end
+
+  def test_totals_render_a_grand_total_row_in_the_tfoot
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+    records = [Account.new("Ada", "Pro", 49), Account.new("Joan", "Free", 21)]
+
+    html = view.railsui_table(
+      id: :accounts,
+      records: records,
+      frame: false,
+      totals: { mrr: ->(rows) { rows.sum(&:mrr) } },
+      columns: [:name, :mrr]
+    )
+
+    assert_includes html, '<tfoot><tr class="railsui-table__total-row"><td>Total</td><td>70</td></tr></tfoot>'
+  end
+
+  def test_group_by_rejects_a_row_block
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+
+    error = assert_raises(ArgumentError) do
+      view.railsui_table(id: :accounts, records: [], frame: false, group_by: :plan, columns: [:name]) { |record, _column| record.name }
+    end
+
+    assert_match(/group_by/, error.message)
+  end
+
+  def test_no_group_rows_without_group_by
+    view = ActionView::Base.empty
+    view.extend(RailsuiTables::TableHelper)
+    records = [Account.new("Ada", "Pro", 49)]
+
+    html = view.railsui_table(id: :accounts, records: records, frame: false, columns: [:name, :mrr])
+
+    refute_includes html, "railsui-table--grouped"
+    refute_includes html, "railsui-table__group-header"
+    refute_includes html, "railsui-table__group-footer"
+    refute_includes html, "<tfoot"
+  end
 end

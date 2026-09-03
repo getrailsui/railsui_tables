@@ -185,6 +185,35 @@ override it per table, or set it to `none` to manage the height yourself:
 horizontally. The free helper emits the class; the styling that freezes it ships
 with [`railsui_tables_pro`](https://github.com/getrailsui/railsui_tables_pro).
 
+### Grouped rows and totals
+
+Pass `group_by:` to break the rows into labelled sections. Adjacent records
+with the same group value share a section, so order the relation by the group
+first — the helper renders records in the order given and never re-sorts:
+
+```erb
+<%= railsui_table id: :accounts, records: @accounts.order(:plan, :name),
+      group_by: :plan,
+      group_totals: { mrr: ->(rows) { rows.sum(&:mrr) } },
+      totals: { mrr: ->(rows) { rows.sum(&:mrr) } },
+      columns: [:name, { key: :mrr, label: "MRR" }] %>
+```
+
+`group_by:` is a method name or a lambda receiving the record; each group is
+labelled with the value's `to_s`. `group_totals:` adds a subtotal row after
+each group and `totals:` a grand-total row in the `<tfoot>`. Both map column
+keys to lambdas that receive their slice of records and return display-ready
+values, so format inside the lambda (`number_to_currency`, etc.).
+
+Group rows are chrome, not data rows — selection, reordering, and expandable
+detail rows skip them. `zebra: true` with grouping is not a supported
+combination for now: the stripes count group rows too. The free gem renders
+the structure with stable classes (`railsui-table__group-header`,
+`railsui-table__group-footer`, `railsui-table__total-row`, and a
+`railsui-table--grouped` modifier); the polished treatment — sticky group
+headers, tinted subtotal rows — ships with
+[`railsui_tables_pro`](https://github.com/getrailsui/railsui_tables_pro).
+
 ### Loading skeleton
 
 Render a shimmering placeholder — for example as a lazy Turbo Frame's default
@@ -258,7 +287,7 @@ targets; those decisions belong to the product using the table.
 ## What This Gem Does Not Do
 
 - No client-side sorting, pagination, or full collection synchronization
-- No inline spreadsheet editing, pivoting, grouping, or data virtualization
+- No inline spreadsheet editing, pivoting, or data virtualization
 - No authorization or bulk mutation behavior
 - No assumptions about a particular CSS framework, ORM query, or route shape
 

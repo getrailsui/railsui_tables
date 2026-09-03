@@ -26,6 +26,11 @@ public API may change between minor versions.
   a sticky header can only pin to the container that actually scrolls.
 - `frozen_first_column:` option to pin the first column while a wide table
   scrolls horizontally. The styling ships with Rails UI Tables Pro.
+- Row grouping and totals: `group_by:` chunks adjacent records into labelled
+  sections (the host controls ordering), `group_totals:` renders a subtotal
+  row after each group, and `totals:` a grand-total row in the `<tfoot>`.
+  The free gem renders the structure with stable classes and a
+  `railsui-table--grouped` modifier; the polished styling ships with Pro.
 - `railsui_table_skeleton` renders a shimmering loading placeholder for a lazy
   Turbo Frame's default content.
 - Real-time filtering: `railsui_table_filter_form` submits on input (debounced);
